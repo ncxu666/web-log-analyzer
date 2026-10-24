@@ -1,0 +1,87 @@
+# 网站访问日志可视化分析工具
+
+一个基于 **Flask + ECharts** 的 Web 访问日志分析工具：导入 Nginx / Apache 访问日志，自动完成解析、统计与异常检测，并以可视化图表展示分析结果。
+
+## 功能一览
+
+| 模块 | 说明 |
+| --- | --- |
+| 日志导入 | 支持上传 `.log` 文件（或一键加载内置示例日志），万行级日志秒级解析 |
+| 日志解析 | 解析 Nginx / Apache `combined` 格式，提取 IP、时间、方法、URL、状态码、字节数、Referer、User-Agent |
+| 统计分析 | 访问量趋势、Top 10 访问 IP、Top 10 访问 URL、状态码分布、请求方法分布 |
+| 异常检测 | 高频访问 IP、4xx/5xx 错误率异常、可疑 User-Agent、攻击特征请求、暴力破解 |
+| 可视化 | ECharts 折线图 / 饼图 / 柱状图 + 异常明细表格，支持深浅主题切换 |
+| 结果导出 | 异常访问明细导出为 CSV |
+
+## 目录结构
+
+```
+├── app.py               # Flask 主程序（路由、上传、导出）
+├── parser.py            # 日志解析模块
+├── analyzer.py          # 统计分析模块
+├── detector.py          # 异常检测模块
+├── config.json          # 检测规则与阈值（可配置）
+├── generate_sample.py   # 演示日志生成脚本
+├── requirements.txt
+├── sample_logs/access.log   # 内置示例日志
+├── static/
+│   ├── echarts.min.js   # 本地 ECharts（离线可用）
+│   ├── app.js           # 前端图表与交互逻辑
+│   └── style.css        # 页面样式（深浅主题）
+└── templates/index.html # 展示页面
+```
+
+## 运行方式
+
+```bash
+pip install -r requirements.txt
+python app.py
+# 浏览器打开 http://127.0.0.1:5000
+```
+
+> ECharts 已本地化到 `static/echarts.min.js`，离线环境下也能正常出图。
+
+生成演示日志（可选，仓库已附带一份）：
+
+```bash
+python generate_sample.py
+```
+
+## 日志格式
+
+支持 Nginx / Apache 的 `combined` 格式：
+
+```
+192.168.1.1 - - [21/Oct/2026:13:55:36 +0800] "GET /index.html HTTP/1.1" 200 1024 "-" "Mozilla/5.0 ..."
+```
+
+解析正则见 `parser.py`，各字段提取准确，无法解析的行自动跳过。
+
+## 异常检测规则（规则 ≥ 5 条）
+
+规则与阈值集中在 `config.json`，可自由增删修改：
+
+1. **SQL 注入** —— `union select`、`' or '1'='1`、`sleep(`、`information_schema`、`0x…` 等关键字
+2. **路径遍历** —— `../`、`..%2f`、`%2e%2e` 等特征
+3. **XSS 跨站脚本** —— `<script`、`javascript:`、`onerror=`、`alert(`
+4. **敏感文件探测** —— `/etc/passwd`、`.env`、`wp-config.php`、`phpmyadmin`、`.git/` 等
+5. **命令注入** —— `;id`、`|cat`、`&&whoami`、`${...}` 等特征
+6. **单 IP 高频访问**（扫描/爆破）—— 请求次数超过阈值（默认 200）
+7. **4xx/5xx 错误率异常** —— 某 IP 错误请求占比过高（默认 50%，且请求数 ≥ 20）
+8. **可疑 User-Agent** —— 空 UA 或包含 sqlmap / nikto / nmap / curl / python-requests 等扫描器指纹
+9. **暴力破解** —— 针对登录接口（`wp-login.php`、`/login` 等）的大量失败请求（401/403 ≥ 5 次）
+
+## 技术要点
+
+- **模块化**：解析 / 统计 / 检测三模块解耦，规则与阈值用 JSON 配置，便于扩展。
+- **性能**：解析只用一条预编译正则、单次遍历，配合 `collections.Counter` 聚合，万行日志毫秒级完成。
+- **可视化规范**：采用经过校验的色板（浅色 / 深色两套），图表带图例、悬浮提示与明细表格，色盲安全。
+- **CSV 导出**：带 UTF-8 BOM，Excel 打开中文不乱码。
+
+## 演示流程
+
+1. 点击「加载示例日志」或上传自己的日志文件；
+2. 顶部展示总请求数、独立 IP 数、错误请求数、异常记录数；
+3. 查看访问趋势折线图、状态码/方法分布饼图、Top IP / URL 柱状图、攻击规则命中统计；
+4. 在异常明细表切换标签，查看攻击特征、高频 IP、错误率异常、可疑 UA、暴力破解；
+5. 点击「导出异常明细 CSV」下载结果。
