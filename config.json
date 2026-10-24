@@ -1,0 +1,40 @@
+{
+  "top_n": 10,
+  "high_freq_threshold": 200,
+  "error_rate_threshold": 0.5,
+  "error_min_count": 20,
+  "brute_force_min_failures": 5,
+  "suspicious_ua_keywords": [
+    "sqlmap", "nikto", "nmap", "masscan", "nessus", "acunetix", "hydra",
+    "gobuster", "dirbuster", "wpscan", "zgrab", "nuclei", "burpsuite",
+    "curl", "wget", "python-requests", "python-urllib", "scrapy", "libwww-perl"
+  ],
+  "login_endpoints": ["wp-login.php", "/login", "/admin/login", "signin", "auth", "admin.php"],
+  "attack_rules": [
+    {
+      "name": "SQL注入",
+      "pattern": "(union\\s+select|select\\s+.+\\s+from|'\\s+or\\s+'1'='1|or\\s+1=1|sleep\\s*\\(|benchmark\\s*\\(|information_schema|concat\\s*\\(|/\\*\\*/|0x[0-9a-fA-F]+|convert\\s*\\()",
+      "desc": "请求中包含 SQL 注入关键字"
+    },
+    {
+      "name": "路径遍历",
+      "pattern": "(\\.\\./|\\.\\.%2f|%2e%2e|%2f%2e%2e)",
+      "desc": "请求中包含路径遍历特征（../ 等）"
+    },
+    {
+      "name": "XSS跨站脚本",
+      "pattern": "(<script|javascript:|onerror\\s*=|alert\\s*\\()",
+      "desc": "请求中包含 XSS 攻击特征"
+    },
+    {
+      "name": "敏感文件探测",
+      "pattern": "(/etc/passwd|\\.env|wp-config\\.php|phpmyadmin|/proc/self|server-status|\\.git/|config\\.bak)",
+      "desc": "探测敏感文件或后台目录"
+    },
+    {
+      "name": "命令注入",
+      "pattern": "(;\\s*(id|whoami|cat|ls)\\b|\\|\\s*(id|cat|sh)\\b|&&\\s*(id|whoami)\\b|\\$\\{)",
+      "desc": "请求中包含命令注入特征"
+    }
+  ]
+}
