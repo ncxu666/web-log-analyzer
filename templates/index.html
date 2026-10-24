@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>网站访问日志可视化分析工具</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='echarts.min.js') }}"></script>
+</head>
+<body>
+  <header class="masthead">
+    <div>
+      <h1>网站访问日志可视化分析工具</h1>
+      <p class="sub">导入 Nginx / Apache 访问日志 · 自动解析 · 统计 · 异常检测 · 可视化</p>
+    </div>
+    <button id="themeBtn" class="btn ghost small" title="切换深浅主题">🌓 主题</button>
+  </header>
+
+  <section class="toolbar">
+    <label class="upload-btn">
+      <input type="file" id="fileInput" accept=".log,.txt" hidden>
+      📂 选择日志文件
+    </label>
+    <button id="sampleBtn" class="btn">🧪 加载示例日志</button>
+    <button id="exportBtn" class="btn ghost" disabled>⬇ 导出异常明细 CSV</button>
+    <span id="fileInfo" class="file-info">尚未导入日志</span>
+  </section>
+
+  <section id="summary" class="cards" hidden>
+    <div class="card"><div class="num" id="cTotal">0</div><div class="label">总请求数</div></div>
+    <div class="card"><div class="num" id="cIPs">0</div><div class="label">独立 IP 数</div></div>
+    <div class="card"><div class="num" id="cErr">0</div><div class="label">4xx/5xx 请求</div></div>
+    <div class="card warn"><div class="num" id="cAnom">0</div><div class="label">异常记录数</div></div>
+  </section>
+
+  <div id="charts" class="grid">
+    <div class="panel wide">
+      <h3>访问量趋势</h3>
+      <div id="chartTrend" class="chart"></div>
+    </div>
+    <div class="panel">
+      <h3>状态码分布</h3>
+      <div id="chartStatus" class="chart"></div>
+    </div>
+    <div class="panel">
+      <h3>请求方法分布</h3>
+      <div id="chartMethod" class="chart"></div>
+    </div>
+    <div class="panel">
+      <h3>Top 10 访问 IP</h3>
+      <div id="chartIp" class="chart"></div>
+    </div>
+    <div class="panel">
+      <h3>Top 10 访问 URL</h3>
+      <div id="chartUrl" class="chart"></div>
+    </div>
+    <div class="panel wide">
+      <h3>攻击规则命中统计</h3>
+      <div id="chartRules" class="chart"></div>
+    </div>
+  </div>
+
+  <section id="anomalies" class="panel" hidden>
+    <h3>异常检测明细</h3>
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-t="attack">攻击特征请求</button>
+      <button class="tab" data-t="freq">高频访问 IP</button>
+      <button class="tab" data-t="err">错误率异常</button>
+      <button class="tab" data-t="ua">可疑 User-Agent</button>
+      <button class="tab" data-t="brute">暴力破解</button>
+    </div>
+    <div class="table-wrap">
+      <table id="anomTable"></table>
+    </div>
+  </section>
+
+  <div id="loading" class="loading">
+    <div class="loading-box">
+      <div class="spinner"></div>
+      <p class="loading-text">解析分析中…</p>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
